@@ -25,6 +25,7 @@ Requirements
 Usage
 =====
 
+(as root)
 ```bash
 sniffy.py -i <interface_name>
 ```
