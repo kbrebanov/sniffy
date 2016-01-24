@@ -20,7 +20,7 @@ def main():
                 print(packet.to_json())
     except KeyboardInterrupt:
         s.stop()
-    else:
+    finally:
         s.stop()
 
 if __name__ == '__main__':
