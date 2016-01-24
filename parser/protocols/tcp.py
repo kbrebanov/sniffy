@@ -2,9 +2,14 @@ import binascii
 import struct
 
 class TCPSegment:
+    """
+    This class represents a TCP segment.
+    """
+
     def __init__(self, data):
         self.data = data
         fields = self._parse()
+
         self.source_port = fields[0]
         self.destination_port = fields[1]
         self.sequence_number = fields[2]
@@ -20,12 +25,14 @@ class TCPSegment:
     def _parse(self):
         fields = struct.unpack('!2s2s4s4s1s1s2s2s2s', self.data[:20])
         payload = self.data[20:]
+
         source_port = int(binascii.hexlify(fields[0]).decode(), 16)
         destination_port = int(binascii.hexlify(fields[1]).decode(), 16)
         sequence_number = int(binascii.hexlify(fields[2]).decode(), 16)
         ack_number = int(binascii.hexlify(fields[3]).decode(), 16)
         data_offset = int(binascii.hexlify(fields[4]).decode()[0], 16)
         reserved_ns = int(binascii.hexlify(fields[4]).decode()[1], 16)
+
         flags = int(binascii.hexlify(fields[5]).decode(), 16)
         set_flags = []
         if reserved_ns & 1 == 1:
@@ -46,13 +53,16 @@ class TCPSegment:
             set_flags.append("SYN")
         if flags & 1 == 1:
             set_flags.append("FIN")
+
         window_size = int(binascii.hexlify(fields[6]).decode(), 16)
         checksum = "0x" + binascii.hexlify(fields[7]).decode()
         urgent_pointer = "0x" + binascii.hexlify(fields[8]).decode()
+
         options = ''
         if data_offset > 5:
             options = struct.unpack('!4s', payload[:4])
             payload = self.data[24:]
+            
         return (source_port, destination_port, sequence_number, ack_number,
                data_offset, set_flags, window_size, checksum, urgent_pointer,
                options, payload)

@@ -2,9 +2,14 @@ import binascii
 import struct
 
 class IPv4Packet:
+    """
+    This class represents an IPv4 packet.
+    """
+
     def __init__(self, data):
         self.data = data
         fields = self._parse()
+        
         self.version = fields[0]
         self.header_length = fields[1]
         self.dscp = fields[2]
@@ -24,28 +29,33 @@ class IPv4Packet:
     def _parse(self):
         fields = struct.unpack('!1s1s2s2s2s1s1s2s4s4s', self.data[:20])
         payload = self.data[20:]
+
         version = int(binascii.hexlify(fields[0]).decode()[0], 16)
         header_length = int(binascii.hexlify(fields[0]).decode()[1], 16)
         dscp = int(binascii.hexlify(fields[1]).decode(), 16) >> 2
         ecn = int(binascii.hexlify(fields[1]).decode(), 16) & 3
         total_length = int(binascii.hexlify(fields[2]).decode(), 16)
         identification = "0x" + binascii.hexlify(fields[3]).decode()
+
         flags = int(binascii.hexlify(fields[4]).decode(), 16) & 57344
         set_flags = []
         if flags & 2 == 2:
             set_flags.append("DF")
         if flags & 1 == 1:
             set_flags.append("MF")
+
         fragment_offset = int(binascii.hexlify(fields[4]).decode(), 16) & 8191
         ttl = int(binascii.hexlify(fields[5]).decode(), 16)
         protocol = int(binascii.hexlify(fields[6]).decode(), 16)
         header_checksum = "0x" + binascii.hexlify(fields[7]).decode()
         source_address = '.'.join(["{0:d}".format(b) for b in fields[8]])
         destination_address = '.'.join(["{0:d}".format(b) for b in fields[9]])
+
         options = ''
         if header_length > 5:
             options = struct.unpack('!4s', payload[:4])
             payload = self.data[24:]
+
         return (version, header_length, dscp, ecn, total_length,
                identification, set_flags, fragment_offset, ttl, protocol,
                header_checksum, source_address, destination_address,

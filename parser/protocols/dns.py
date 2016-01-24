@@ -5,9 +5,13 @@ import dns.message
 import dns.exception
 
 class DNSPacket:
+    """
+    This class represents a DNS packet.
+    """
     def __init__(self, data):
         self.data = data
         fields = self._parse()
+        
         self.id = fields[0]
         self.flags = fields[1]
         self.total_questions = fields[2]
