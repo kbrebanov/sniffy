@@ -1,6 +1,8 @@
+import sys
 import binascii
 
 import dns.message
+import dns.exception
 
 class DNSPacket:
     def __init__(self, data):
@@ -18,11 +20,27 @@ class DNSPacket:
         self.additional_rrs = fields[9]
 
     def _parse(self):
-        message = dns.message.from_wire(self.data)
+        try:
+            message = dns.message.from_wire(self.data)
+        except dns.exception.ShortHeader:
+            print("The message is less than 12 octets long.", file=sys.stderr)
+            raise
+        except dns.exception.TrailingJunk:
+            print("There were octets in the message past the end of the proper DNS message.",
+                  file=sys.stderr)
+            raise
+        except dns.exception.BadEDNS:
+            print("An OPT record was in the wrong section, or occurred more than once.",
+                  file=sys.stderr)
+            raise
+        except dns.exception.BadTSIG:
+            print("A TSIG record was not the last record of the additional data section.",
+                  file=sys.stderr)
+            raise
+
         message_id = message.id
-        
+
         flags = {}
-        print(message.flags)
         if (message.flags & 32768) == 32768:
             flags["qr"] = 1
         else:
