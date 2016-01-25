@@ -3,6 +3,11 @@ import binascii
 
 import dns.message
 import dns.exception
+import dns.flags
+import dns.opcode
+import dns.rcode
+import dns.rdataclass
+import dns.rdatatype
 
 class DNSPacket:
     """
@@ -11,7 +16,7 @@ class DNSPacket:
     def __init__(self, data):
         self.data = data
         fields = self._parse()
-        
+
         self.id = fields[0]
         self.flags = fields[1]
         self.total_questions = fields[2]
@@ -44,41 +49,12 @@ class DNSPacket:
 
         message_id = message.id
 
-        flags = {}
-        if (message.flags & 32768) == 32768:
-            flags["qr"] = 1
-        else:
-            flags["qr"] = 0
-        flags["opcode"] = message.opcode()
-        if (message.flags & 1024) == 1024:
-            flags["aa"] = 1
-        else:
-            flags["aa"] = 0
-        if (message.flags & 512) == 512:
-            flags["tc"] = 1
-        else:
-            flags["tc"] = 0
-        if (message.flags & 256) == 256:
-            flags["rd"] = 1
-        else:
-            flags["rd"] = 0
-        if (message.flags & 128) == 128:
-            flags["ra"] = 1
-        else:
-            flags["ra"] = 0
-        if (message.flags & 64) == 64:
-            flags["z"] = 1
-        else:
-            flags["z"] = 0
-        if (message.flags & 32) == 32:
-            flags["ad"] = 1
-        else:
-            flags["ad"] = 0
-        if (message.flags & 16) == 16:
-            flags["cd"] = 1
-        else:
-            flags["cd"] = 0
-        flags["rcode"] = message.rcode()
+        flags = []
+        for flag in dns.flags.to_text(message.flags).split():
+            flags.append(flag)
+
+        flags.append(dns.opcode.to_text(message.opcode()))
+        flags.append(dns.rcode.to_text(message.rcode()))
 
         total_questions = len(message.question)
         total_answer_rrs = len(message.answer)
@@ -88,8 +64,8 @@ class DNSPacket:
         questions = []
         for question in message.question:
             questions.append({"name": question.name.to_text(),
-                              "type": question.rdtype,
-                              "class": question.rdclass})
+                              "type": dns.rdatatype.to_text(question.rdtype),
+                              "class": dns.rdataclass.to_text(question.rdclass)})
         answer_rrs = []
         for answer in message.answer:
             rdata_items = []
@@ -97,8 +73,8 @@ class DNSPacket:
                 rdata_items.append(item.to_text())
 
             answer_rrs.append({"name": answer.name.to_text(),
-                               "type": answer.rdtype,
-                               "class": answer.rdclass,
+                               "type": dns.rdatatype.to_text(answer.rdtype),
+                               "class": dns.rdataclass.to_text(answer.rdclass),
                                "ttl": answer.ttl,
                                "rdata_length": len(answer.items),
                                "rdata": rdata_items})
@@ -110,8 +86,8 @@ class DNSPacket:
                 rdata_items.append(item.to_text())
 
             authority_rrs.append({"name": authority.name.to_text(),
-                                  "type": authority.rdtype,
-                                  "class": authority.rdclass,
+                                  "type": dns.rdatatype.to_text(dnsauthority.rdtype),
+                                  "class": dns.rdataclass.to_text(authority.rdclass),
                                   "ttl": authority.ttl,
                                   "rdata_length": len(authority.items),
                                   "rdata": rdata_items})
@@ -123,8 +99,8 @@ class DNSPacket:
                 rdata_items.append(item.to_text())
 
             additional_rrs.append({"name": additional.name.to_text(),
-                                   "type": additional.rdtype,
-                                   "class": additional.rdclass,
+                                   "type": dns.rdatatype.to_text(additional.rdtype),
+                                   "class": dns.rdataclass.to_text(additional.rdclass),
                                    "ttl": additional.ttl,
                                    "rdata_length": len(additional.items),
                                    "rdata": rdata_items})
