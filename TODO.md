@@ -1,0 +1,8 @@
+- Parse IPv4 options
+- Parse TCP options
+- Improve error handling
+- Improve README
+- Add comments/docstrings
+- Add tests
+- Support IPv6
+- Support HTTP
