@@ -26,9 +26,12 @@ TCP_PORTS = {
 }
 
 class Packet:
-    def __init__(self, data):
+    def __init__(self, ts, data):
+        self.ts = ts
         self.data = data
-        self.headers = {}
+        self.headers = {
+            "timestamp": self.ts
+        }
         self._parse()
 
     def _parse(self):

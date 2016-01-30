@@ -20,6 +20,7 @@ It currently parses the following:
 Requirements
 ============
 
+  - [pcappy](https://github.com/allfro/pcappy)
   - dnspython3
 
 Usage

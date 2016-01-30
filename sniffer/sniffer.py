@@ -1,22 +1,31 @@
-import socket
+import threading
 
-ETH_P_ALL = 0x0003
-MAX_PACKET_SIZE = 65535
+import pcappy
+import parser.packet as packet_parser
 
-class Sniffer:
-    def __init__(self, interface, packet_size=MAX_PACKET_SIZE):
-      self.interface = interface
-      self.packet_size = packet_size
-      self._sniffer = socket.socket(family=socket.AF_PACKET, type=socket.SOCK_RAW,
-                                    proto=socket.htons(ETH_P_ALL))
+MAX_PACKET_SIZE=65535
+TIMEOUT=1000
 
-    def start(self):
-        self._sniffer.bind((self.interface, ETH_P_ALL))
+class Sniffer(threading.Thread):
+    def __init__(self, interface, snaplen, promisc, ms):
+        threading.Thread.__init__(self)
+        self.interface = interface
+        self.snaplen = snaplen
+        self.promisc = promisc
+        self.ms = ms
+        self.d = {}
+        self.capture = None
 
-    def sniff(self):
-        while True:
-           data = self._sniffer.recv(self.packet_size)
-           yield data
+    def run(self):
+        self.capture = pcappy.open_live(self.interface, snaplen=self.snaplen,
+                                        promisc=self.promisc, to_ms=self.ms)
+        self.capture.loop(-1, self._parse_packet, self.d)
 
     def stop(self):
-        self._sniffer.close()
+        self.capture.breakloop()
+
+    def _parse_packet(self, d, hdr, data):
+        ts = float(str(hdr.ts[1]) + "." + str(hdr.ts[0]))
+        packet = packet_parser.Packet(ts, data)
+        if packet:
+            print(packet.to_json())
